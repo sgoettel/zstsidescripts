@@ -64,10 +64,10 @@ def extract_comments(zst_file):
         for year in range(first_year, last_year + 1):
             for month in range(1, 13):
                 if not comments_per_year[year][month]:
-                    print(f"Kein JSON-Objekt für {month}/{year} gefunden.")
+                    print(f"No JSON object for {month}/{year} found.")
 
     # Write the comments to a JSON file
-    output_filename = f"{zst_file}_12comments_each_year.JSON"
+    output_filename = f"{zst_file}_comments_each_year.JSON"
     with open(output_filename, 'w') as outfile:
         json.dump(comments_per_year, outfile, indent=4)
 
