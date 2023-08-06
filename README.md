@@ -11,4 +11,7 @@ Make sure that the `zstandard` library is installed on your machine.
 
 2. count_comments_per_year.py: This script does a simple job - it counts Reddit comments in a zst file, grouped by year. It extracts the `created_utc` from each JSON object (comment), converts it to year, and tallies up the comments. To use, run: `python3 count_comments_per_year.py path/to/your/file.zst`
 
+3. objects_and_tokens.py: This script counts both the JSON objects and tokens (words and numbers) within the 'body' field of each object. You can get individual count reports for each file with `-s` or get the total count from all files with `-a`. Noteworthy, the chunk size in this script is set to 128MB, I just played around with a larger chunk size here to experiment with different performance characteristics.
+Run: `python3 count_json_objects_and_tokens.py -s path/to/your/file.zst` for single file stats, or `-a` for total stats.
+
 I hope these tools will help you in your exploration of the Pushshift archives.
