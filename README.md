@@ -1,7 +1,7 @@
 # zstsidescripts
-This is a place where I've dumped a bunch of side scripts I ended up writing while working with Pushshift's zst archive files.
+This is a place where I've dumped a bunch of side scripts I ended up writing while working with Pushshift's zst [archive files](https://academictorrents.com/details/7c0645c94321311bb05bd879ddee4d0eba08aaee).
 
-You can find my main script that does all the heavy lifting over [here](https://academictorrents.com/details/7c0645c94321311bb05bd879ddee4d0eba08aaee). That's the one you'll want if you're looking to search keywords, filter out content, and other stuff.
+You can find my main script that does the "heavy lifting" over [here](https://github.com/sgoettel/rzcf). That's the one you'll want if you're looking to search keywords, filter out content, and other stuff.
 
 This scripts here will let you poke around the zst files to get a feel for the data structure, pull out content based on time, and other simple tasks like that.
 
