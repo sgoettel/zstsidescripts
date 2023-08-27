@@ -14,8 +14,7 @@ Make sure that the `zstandard` library is installed on your machine.
 3. objects_and_tokens.py: This script counts both the JSON objects and tokens (words and numbers) within the 'body' field of each object. You can get individual count reports for each file with `-s` or get the total count from all files with `-a`. Noteworthy, the chunk size in this script is set to 128MB, I just played around with a larger chunk size here to experiment with different performance characteristics.
 Run: `python3 count_json_objects_and_tokens.py -s path/to/your/file.zst` for single file stats, or `-a` for total stats.
 
-4. 
-This script processes a zst-compressed file of Reddit comments to extract comments associated with specific threads or all threads. You can specify a particular thread using the `link_id` of a post or use `-a` for all excisting threads within a zst file/subreddit.
+4. comment_tree.py: This script processes a zst-compressed file of Reddit comments to extract comments associated with specific threads or all threads. You can specify a particular thread using the `link_id` of a post or use `-a` for all excisting threads within a zst file/subreddit.
 
 The script allows two ways to display comments:
 
