@@ -7,14 +7,35 @@ This scripts here will let you poke around the zst files to get a feel for the d
 
 Make sure that the `zstandard` library is installed on your machine.
 
-1. archivesampler.py: The script works by extracting one comment from each month of available data in the archive. The purpose of this is to help analyze the structural changes in the JSON format of the comments over time. The output JSON file will be saved in the same directory as your .zst file. Run: `python3 archivesampler.py path/to/your/file.zst`
+- [archivesampler.py](#archivesamplerpy)
+- [count_comments_per_year.py](#count_comments_per_yearpy)
+- [objects_and_tokens.py](#objects_and_tokenspy)
+- [trim_username_comments.py](#trim_username_commentspy)
+- [comment_tree.py](#comment_treepy)
 
-2. count_comments_per_year.py: This script does a simple job - it counts Reddit comments in a zst file, grouped by year. It extracts the `created_utc` from each JSON object (comment), converts it to year, and tallies up the comments. To use, run: `python3 count_comments_per_year.py path/to/your/file.zst`
+---
 
-3. objects_and_tokens.py: This script counts both the JSON objects and tokens (words and numbers) within the 'body' field of each object. You can get individual count reports for each file with `-s` or get the total count from all files with `-a`. Noteworthy, the chunk size in this script is set to 128MB, I just played around with a larger chunk size here to experiment with different performance characteristics.
+## archivesampler.py
+
+The script works by extracting one comment from each month of available data in the archive. The purpose of this is to help analyze the structural changes in the JSON format of the comments over time. The output JSON file will be saved in the same directory as your .zst file. Run: `python3 archivesampler.py path/to/your/file.zst`
+
+
+## count_comments_per_year.py
+
+This script does a simple job - it counts Reddit comments in a zst file, grouped by year. It extracts the `created_utc` from each JSON object (comment), converts it to year, and tallies up the comments. To use, run: `python3 count_comments_per_year.py path/to/your/file.zst`
+
+## objects_and_tokens.py
+
+This script counts both the JSON objects and tokens (words and numbers) within the 'body' field of each object. You can get individual count reports for each file with `-s` or get the total count from all files with `-a`. Noteworthy, the chunk size in this script is set to 128MB, I just played around with a larger chunk size here to experiment with different performance characteristics.
 Run: `python3 count_json_objects_and_tokens.py -s path/to/your/file.zst` for single file stats, or `-a` for total stats.
 
-4. comment_tree.py: This script processes a zst-compressed file of Reddit comments to extract comments associated with specific threads or all threads. You can specify a particular thread using the `link_id` of a post or use `-a` for all excisting threads within a zst file/subreddit.
+## trim_username_comments.py
+
+This script is designed to filter out Reddit comments from specific users or bots. Common use-cases include excluding comments from users such as "[deleted]", "AutoModerator", or any other usernames you might want to omit. Run: `trim_username_comments.py -a "user1" path/to/your/file.zst` The script supports filtering multiple authors at once. Due to to some error in the argument parser, which I didn't figure out yet, the correct format is: `python3 trim_username_comments.py path/to/file.zst -a "user1" "bot2" "[deleted]"`. Simply add usernames one after the other to extend the filter.
+
+## comment_tree.py
+
+Script with some couple more functions to explain, it processes the zst-compressed file of Reddit comments to extract comments associated with specific threads or all threads. You can specify a particular thread using the `link_id` of a post or use `-a` for all excisting threads within a zst file/subreddit.
 
 The script allows two ways to display comments:
 
@@ -33,4 +54,4 @@ Where:
 -   `-s` or `-f` determine the format, structured or flat, respectively.
 
 
-I hope these tools will help you in your exploration of the Pushshift archives.
+I hope these tools will help you in your exploration of the Pushshift archives and Reddit data.
