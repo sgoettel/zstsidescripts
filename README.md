@@ -31,7 +31,7 @@ Run: `python3 count_json_objects_and_tokens.py -s path/to/your/file.zst` for sin
 
 ## trim_username_comments.py
 
-This script is designed to filter out Reddit comments from specific users or bots. Common use-cases include excluding comments from users such as "[deleted]", "AutoModerator", or any other usernames you might want to omit. Run: `trim_username_comments.py -a "user1" path/to/your/file.zst` The script supports filtering multiple authors at once. Due to to some error in the argument parser, which I didn't figure out yet, the correct format is: `python3 trim_username_comments.py path/to/file.zst -a "user1" "bot2" "[deleted]"`. Simply add usernames one after the other to extend the filter.
+This script is designed to filter out Reddit comments from specific users (or mainly bots). Common use-cases include excluding comments from users such as "[deleted]", "AutoModerator", or any other usernames you might want to omit. Script is also capable of removing "empty" body keys, like `"[removed]"` or `"[deleted]"` via `-rd` or `--removed-deleted`. Run: `trim_username_comments.py -a "AutoModerator" -rd path/to/your/file.zst` (filters out all comments from u/AutoModerator as well as all deleted/removed comments). The script supports filtering multiple authors at once, e.g. `python3 trim_comments.py -a "bot2" -a "bot1 path/to/zst.zst` (filters out all comments from u/bot1 and u/bot2).
 
 ## comment_tree.py
 
