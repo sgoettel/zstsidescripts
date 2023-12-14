@@ -4,21 +4,20 @@ import zstandard as zstd
 
 CHUNK_SIZE = 16384
 
-def filter_comments(zst_file, authors, remove_deleted):
+def filter_comments(zst_file, authors, remove_deleted, log_file):
     dctx = zstd.ZstdDecompressor()
-    cctx = zstd.ZstdCompressor(level=15) # set compression level here (range 1-22); adjust as needed for optimal size/speed balance
+    cctx = zstd.ZstdCompressor(level=15)
 
     input_filename = zst_file
     output_filename = f"{zst_file.rsplit('.', 1)[0]}_filtered.zst"
-    
-    excluded_counts = {author: 0 for author in authors}
-    deleted_count = 0
-    # create decompression and compression streams
+    log_filename = log_file
 
-    with open(input_filename, 'rb') as fh, open(output_filename, 'wb') as ofh:
+    excluded_counts = {author.lower(): 0 for author in authors} if authors else {}
+    deleted_count = 0
+
+    with open(input_filename, 'rb') as fh, open(output_filename, 'wb') as ofh, open(log_filename, 'w') as lf:
         with dctx.stream_reader(fh) as reader, cctx.stream_writer(ofh) as writer:
             buffer = ""
-
             deleted_tags = ["[removed]", "[deleted]", "[removed by reddit]"]
             
             while True:
@@ -40,15 +39,16 @@ def filter_comments(zst_file, authors, remove_deleted):
                     try:
                         obj = json.loads(line)
 
-                        if obj["author"].lower() in authors:
+                        if authors and obj["author"].lower() in authors:
                             excluded_counts[obj["author"].lower()] += 1
                             continue
 
                         if remove_deleted and obj["body"] in deleted_tags:
                             deleted_count += 1
+                            lf.write(json.dumps(obj) + "\n")  # Log removed comment
                             continue
 
-                        writer.write(json.dumps(obj).encode() + b"\n") # newline after each JSON
+                        writer.write(json.dumps(obj).encode() + b"\n")
 
                     except json.JSONDecodeError:
                         continue
@@ -58,16 +58,16 @@ def filter_comments(zst_file, authors, remove_deleted):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Filter Reddit comments based on certain criteria.')
     parser.add_argument('zst_file', help='Path to the zst compressed file containing Reddit comments.')
-    parser.add_argument('-a', '--author', action='append', help='Username(s) to be filtered out.', required=True) # used nargs='+' before, still trying to figure out.. 
+    parser.add_argument('-a', '--author', action='append', help='Username(s) to be filtered out.', required=False)
     parser.add_argument('-rd', '--remove-deleted', action='store_true', help='Remove comments with deleted or removed body.')
+    parser.add_argument('-log', '--log-file', default='removed_comments_log.txt', help='File to log removed comments.')
 
     args = parser.parse_args()
 
-    authors_to_remove = [author.lower() for author in args.author]
+    authors_to_remove = [author.lower() for author in args.author] if args.author else []
 
-    excluded_counts, deleted_count = filter_comments(args.zst_file, authors_to_remove, args.remove_deleted)
+    excluded_counts, deleted_count = filter_comments(args.zst_file, authors_to_remove, args.remove_deleted, args.log_file)
 
-    # output messages
     for name, count in excluded_counts.items():
         if count > 0:
             print(f"{count} comments from '{name}' excluded.")
