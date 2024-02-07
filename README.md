@@ -31,7 +31,12 @@ Run: `python3 count_json_objects_and_tokens.py -s path/to/your/file.zst` for sin
 
 ## trim_username_comments.py
 
-This script is designed to filter out Reddit comments from specific users (or mainly bots). Common use-cases include excluding comments from users such as "[deleted]", "AutoModerator", or any other usernames you might want to omit. Script is also capable of removing "empty" body keys, like `"[removed]"` or `"[deleted]"` via `-rd` or `--removed-deleted`. Run: `trim_username_comments.py -a "AutoModerator" -rd path/to/your/file.zst` (filters out all comments from u/AutoModerator as well as all deleted/removed comments). The script supports filtering multiple authors at once, e.g. `python3 trim_comments.py -a "bot2" -a "bot1 path/to/zst.zst` (filters out all comments from u/bot1 and u/bot2).
+This script is designed to filter out Reddit comments from specific users (or mainly bots/"AutoModerator"), remove body keys `"[deleted]"` or `"[removed]"`, remove quotations and URLs from the comment body and exclude comments that invoke the RemindMeBot. All changes/modification are logged in `removed_comments_log.txt` automatically. Examples for usage:
+
+- `python3 trim_comments.py -a "bot2" -a "bot1 path/to/zst.zst` (filters out all comments from u/bot1 and u/bot2).
+- `python3 trim_username_comments.py -rd -ru path/to/zst.zst` (filters out deleted or removed comments and removes all URLs from the remaining comments)
+- `python3 trim_username_comments.py -a "automoderator" -rq ath/to/zst.zst` (excludes comments made by AutoModerator and removes quotations from all other comments)
+
 
 ## comment_tree.py
 
