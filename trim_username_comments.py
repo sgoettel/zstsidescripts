@@ -1,6 +1,7 @@
 import argparse
 import json
 import zstandard as zstd
+import os
 import re
 
 CHUNK_SIZE = 16384
@@ -39,6 +40,7 @@ def filter_comments(zst_file, authors, remove_deleted, remove_quotes, remove_rem
 
     excluded_counts = {author.lower(): 0 for author in authors} if authors else {}
     deleted_count = 0
+    removed_url_only_comments_count = 0
     quote_removal_count = 0
     remindme_count = 0
     url_removal_count = 0
@@ -56,7 +58,7 @@ def filter_comments(zst_file, authors, remove_deleted, remove_quotes, remove_rem
 
                 buffer += chunk.decode(errors='ignore')
 
-                last_modified_body = None  # Initialize last_modified_body for every new chunk
+                last_modified_body = None  # initialize last_modified_body for every new chunk
 
                 while True:
                     position = buffer.find('\n')
@@ -79,13 +81,22 @@ def filter_comments(zst_file, authors, remove_deleted, remove_quotes, remove_rem
                         # check and filter out comments from specific authors
                         if authors and obj["author"].lower() in authors:
                             excluded_counts[obj["author"].lower()] += 1
-                            continue
+                            continue # skip further processing for this comment
 
                         # check and remove deleted or removed comments
                         if remove_deleted and obj["body"].strip() in deleted_tags:
                             deleted_count += 1
+                            # log the removal
                             lf.write("\n=========== body: deleted/removed ==========\n")
                             lf.write(json.dumps({"original": original_body, "deleted_comment": obj}) + "\n")
+                            continue
+
+                        # check if body-text is just plaintext URL
+                        if remove_urls and plain_url_regex.fullmatch(obj["body"].strip()):
+                            removed_url_only_comments_count += 1
+                            # log the removal
+                            lf.write("\n=========== body: removed due to being only a URL ==========\n")
+                            lf.write(json.dumps({"original": original_body}) + "\n")
                             continue
 
                         # remove quotations
@@ -97,6 +108,7 @@ def filter_comments(zst_file, authors, remove_deleted, remove_quotes, remove_rem
                                 quote_changed = True
                                 body_changed = True
 
+                        # remove URLs
                         if remove_urls:
                             # count URLs in comments
                             original_plain_url_count = len(plain_url_regex.findall(obj["body"]))
@@ -120,12 +132,19 @@ def filter_comments(zst_file, authors, remove_deleted, remove_quotes, remove_rem
                                 urls_removed = (original_plain_url_count - new_plain_url_count) + (original_markdown_url_count - new_markdown_url_count)
                                 url_removal_count += urls_removed
 
+                                cleaned_body = obj["body"].strip()
+                                if not cleaned_body or re.fullmatch(r'(\[URL\](\s|\n)*)+', cleaned_body):
+                                    # log comment and skip writing in output data
+                                    lf.write("\n=========== body: only [URL] placeholders ==========\n")
+                                    lf.write(json.dumps({"original": original_body}) + "\n")
+                                    continue  # skip comment
+
                         # remove RemindMe bot invocations
                         if remove_remindme and remindme_regex.search(obj["body"]):
                             remindme_count += 1
-                            body_changed = True
                             lf.write("\n=========== body: !remindme ==========\n")
-                            lf.write(json.dumps({"original": original_body, "modified": obj["body"]}) + "\n")
+                            lf.write(json.dumps({"original": obj["body"]}) + "\n")
+                            continue
 
 
                         if body_changed: #this keeps me going..
@@ -144,7 +163,7 @@ def filter_comments(zst_file, authors, remove_deleted, remove_quotes, remove_rem
                         continue
 
 
-    return excluded_counts, deleted_count, quote_removal_count, remindme_count, url_removal_count
+    return excluded_counts, deleted_count, quote_removal_count, remindme_count, url_removal_count, removed_url_only_comments_count
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Filter Reddit comments based on certain criteria.')
@@ -154,28 +173,35 @@ if __name__ == '__main__':
     parser.add_argument('-rq', '--remove-quotes', action='store_true', help='Remove quotes from comment body.')
     parser.add_argument('-rr', '--remove-remindme', action='store_true', help='Remove comments asking for RemindMeBot (at the beginning of a comment).')
     parser.add_argument('-ru', '--remove-urls', action='store_true', help='Remove URLs from comment body.')
-    parser.add_argument('-log', '--log-file', default='removed_comments_log.txt', help='File to log removed comments and quotes.')
 
     args = parser.parse_args()
 
+    # extract file name and path
+    input_filename_without_path = os.path.basename(args.zst_file)
+    input_filename_without_extension = input_filename_without_path.rsplit('.', 1)[0]
+    log_filename = f"filtered_log_{input_filename_without_extension}.txt"
+
     authors_to_remove = [author.lower() for author in args.author] if args.author else []
 
-    excluded_counts, deleted_count, quote_removal_count, remindme_count, url_removal_count = filter_comments(args.zst_file, authors_to_remove, args.remove_deleted, args.remove_quotes, args.remove_remindme, args.remove_urls, args.log_file)
+    excluded_counts, deleted_count, quote_removal_count, remindme_count, url_removal_count, removed_url_only_comments_count = filter_comments(args.zst_file, authors_to_remove, args.remove_deleted, args.remove_quotes, args.remove_remindme, args.remove_urls, log_filename)
 
     for name, count in excluded_counts.items():
         if count > 0:
-            print(f"{count} comments from '{name}' excluded.")
+            print(f"{count} comment(s) from '{name}' excluded.")
 
     if args.remove_deleted:
-        print(f"{deleted_count} 'deleted/removed' comments excluded.")
+        print(f"{deleted_count} 'deleted/removed' comment(s) excluded.")
     
     if args.remove_quotes:
         print(f"{quote_removal_count} quotes removed from comments.")
     
     if args.remove_remindme:
-        print(f"{remindme_count} comments asking for RemindMeBot removed.")
+        print(f"{remindme_count} comment(s) asking for RemindMeBot removed.")
     
     if args.remove_urls:
-        print(f"{url_removal_count} URLs removed from comments.")
+        print(f"{url_removal_count} URL(s) removed from comments.")
+    
+    print(f"{removed_url_only_comments_count} comment(s) removed for being only a URL.")
 
     print("Script executed successfully.")
+    
